@@ -4,15 +4,18 @@ from proxy import start_proxy
 
 from loguru import logger
 
+# LOG_FORMAT = "{time:YYYY-MM-DD HH:mm:ss} | {level} | {thread.name} | {message}"
+LOG_FORMAT = "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
+
 logger.remove()
 logger.add(
     sys.stdout,
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {thread.name} | {message}",
+    format=LOG_FORMAT,
     enqueue=True,
 )
 logger.add(
     "proxy.log",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {thread.name} | {message}",
+    format=LOG_FORMAT,
     enqueue=True,
 )
 

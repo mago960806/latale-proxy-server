@@ -1,19 +1,15 @@
 import select
 import socket
 import struct
-from socketserver import StreamRequestHandler, ThreadingTCPServer
-from proxy.enums import Reply, AddressType, Command, Method
-from proxy.utils import encrypt, decrypt
 import threading
-from queue import SimpleQueue
+from socketserver import StreamRequestHandler, ThreadingTCPServer
 
 from loguru import logger
 
-from string import digits
+from proxy.enums import Reply, AddressType, Command, Method
+from proxy.utils import decrypt, encrypt
 
 SOCKS_VERSION = 0x05
-
-queue = SimpleQueue()
 
 
 def start_proxy(host, port):
@@ -22,14 +18,8 @@ def start_proxy(host, port):
     server_thread.daemon = True
     server_thread.start()
     logger.info(f"Listening on port: {host}:{port}")
-    # wait_for_input(server.socket)
-    # wait_for_input()
-
-
-def wait_for_input():
     while True:
-        data = input("[Input]: ")
-        queue.put(data)
+        pass
 
 
 class Socks5Proxy(StreamRequestHandler):
@@ -102,16 +92,26 @@ class Socks5Proxy(StreamRequestHandler):
             # get data from client, transmit to server
             if self.connection in readable:
                 data = self.connection.recv(4096)
-                logger.debug(f"client: {decrypt(data, key=0x00)}")
+                # decrypt(data, key=0x00)
+                logger.debug(f"client[decrypt]: {decrypt(data)}")
                 if remote.send(data) <= 0:
                     break
 
             # get data from server, transmit to client
             if remote in readable:
                 data = remote.recv(4096)
-                logger.debug(f"server: {decrypt(data, key=0x00)}")
+                # logger.debug(f"server: {decrypt(data)}")
                 if self.connection.send(data) <= 0:
                     break
+
+            # # get data from input, transmit to server
+            # if input_socket in readable:
+            #     input_socket.setblocking(False)
+            #     s, _ = input_socket.accept()
+            #     data = s.recv(4096)
+            #     logger.debug(f"input: {data.hex(' ').upper()}")
+            #     if remote.send(encrypt(data)) <= 0:
+            #         break
 
     def get_available_methods(self, nmethods: int) -> list[int]:
         return [method for method in self.receive(nmethods)]

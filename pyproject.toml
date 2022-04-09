@@ -5,12 +5,12 @@ description = ""
 authors = ["mago960806 <mago960806@hotmail.com>"]
 
 [tool.black]
-line-length = 120
+line-length = 200
 
 [tool.isort]
 profile = "black"
 length_sort = true
-line_length = 120
+line_length = 200
 
 [tool.poetry.dependencies]
 python = "^3.10"
