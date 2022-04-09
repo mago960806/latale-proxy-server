@@ -70,7 +70,7 @@ def get_content_info(data: bytes):
         case 0xABC1:
             # 聊天 2D 00 01 00 C1 AB EB 0B 01 00 00 00 00 00 00 00 1C 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 00
             channel_id, message_length = struct.unpack("<QB", content[:9])
-            message_content = content[-message_length:].decode("big5")
+            message_content = content[-message_length:].decode("big5").strip()
             logger.info(f"動作->聊天: 频道ID={channel_id}, 频道名称={CHANNEL_TYPE_DICT.get(channel_id, '未知频道')}, 喊话内容={message_content}")
         case _:
             pass
