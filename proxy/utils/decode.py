@@ -19,7 +19,7 @@ def get_content_info(data: bytes):
     packet_length, packet_type, command, flag = struct.unpack("<HHHH", data[:8])
     content = data[8:]
 
-    if packet_length == 12 and packet_type == 0x00 and command == 0x00:
+    if packet_length == 12 and packet_type == 0x01 and command == 0x00:
         # 心跳包 0C 00 01 00 00 00 00 00 0C C3 E6 43
         logger.info(f"心跳: {content.hex(' ').upper()}")
         return
