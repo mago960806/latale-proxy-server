@@ -8,6 +8,7 @@ from loguru import logger
 
 from proxy.enums import Reply, AddressType, Command, Method
 from proxy.utils import decrypt, encrypt
+from proxy.utils.decode import get_content_info
 
 SOCKS_VERSION = 0x05
 
@@ -92,8 +93,13 @@ class Socks5Proxy(StreamRequestHandler):
             # get data from client, transmit to server
             if self.connection in readable:
                 data = self.connection.recv(4096)
-                # decrypt(data, key=0x00)
-                logger.debug(f"client[decrypt]: {decrypt(data)}")
+                # logger.debug(f"client: {data.hex(' ').upper()}")
+                decrypted_data = decrypt(data)
+                logger.debug(f"client[decrypt]: {decrypted_data.hex(' ').upper()}")
+                try:
+                    get_content_info(decrypted_data)
+                except Exception as e:
+                    print(e)
                 if remote.send(data) <= 0:
                     break
 

@@ -3,7 +3,8 @@ from proxy.db import DATABASE
 
 from loguru import logger
 
-KEYS = [0x66, 0x61, 0x6B, 0x74, 0x6E, 0x70, 0x67, 0x6A, 0x73, 0x71, 0x6D]
+KEYS = [0x6B, 0x74, 0x6E, 0x70, 0x67, 0x6A, 0x73, 0x71, 0x6D, 0x66, 0x61]
+KEY_LENGTH = 11
 
 
 BACKPACK_TYPE_DICT = {0x00: "裝備", 0x01: "消費", 0x02: "其他", 0x03: "活動", 0x04: "寵物", 0x09: "倉庫[一般]", 0x0F: "倉庫[時尚]"}
@@ -48,9 +49,9 @@ def get_content_info(data: bytes):
             action_id, unknown = struct.unpack("<QL", content)
             logger.info(f"動作->動作執行: 動作ID={action_id}, 動作名稱={DATABASE.get_action_name_by_id(action_id)}, 其他參數={hex(unknown).upper()}")
         case 0xA47B:
-            # 技能释放 15 00 01 00 7B A4 EB 0B 48 4B 4C 00 00 00 00 00 FF FF FF FF 00
-            skill_id = struct.unpack("<L", data[8:12])[0]
-            logger.info(f"動作->技能釋放: 技能ID={skill_id}, 技能名稱={DATABASE.get_skill_name_by_id(skill_id)}")
+            # 技能释放 15 00 01 00 7B A4 EB 0B 7C DC 10 00 00 01 00 02 FF FF FF FF 01
+            skill_id, _, skill_type, order, _, awaken_order = struct.unpack("<LBHBLB", content)
+            logger.info(f"動作->技能釋放: 技能ID={skill_id}, 技能名稱={DATABASE.get_skill_name_by_id(skill_id)}, 技能类型={skill_type}, 技能顺序={order}, 超越技能顺序={awaken_order}")
         case 0xAB3D:
             # 倉庫存錢 10 00 01 00 3D AB EB 0B A0 86 01 00 00 00 00 00
             ely = struct.unpack("<Q", content)[0]
@@ -77,22 +78,11 @@ def get_content_info(data: bytes):
             # logger.debug(f"{packet_length=}, {packet_type=}, {command=:04X}, {flag=:04X}, {content.hex(' ').upper()}")
 
 
-def decrypt(data: bytes, key: int = 0x00) -> str:
+def decrypt(data: bytes) -> bytes:
     data = bytearray(data)
-    # 解密头部信息
-    header = data[:6]
-    for i in range(len(header)):
-        header[i] = header[i] ^ key
-    # 解密正文信息
-    content = data[6:]
-    for i in range(len(content)):
-        if content[i] == key:
-            content[i] = content[i] ^ key
-        else:
-            content[i] = content[i] ^ KEYS[i % len(KEYS)]
-    data = header + content
-    try:
-        get_content_info(data)
-    except Exception as e:
-        print(e)
-    return data.hex(" ").upper()
+
+    for i in range(8, len(data)):
+        if data[i] == 0x00:
+            continue
+        data[i] = data[i] ^ KEYS[(i - 8) % KEY_LENGTH]
+    return data
