@@ -1,4 +1,4 @@
-from proxy.utils.decode import decrypt
+from proxy.utils import decrypt
 
 
 if __name__ == "__main__":

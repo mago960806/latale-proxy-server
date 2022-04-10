@@ -7,8 +7,7 @@ from socketserver import StreamRequestHandler, ThreadingTCPServer
 from loguru import logger
 
 from proxy.enums import Reply, AddressType, Command, Method
-from proxy.utils import decrypt, encrypt
-from proxy.utils.decode import get_content_info
+from proxy.utils import decrypt, encrypt, get_content_info
 
 SOCKS_VERSION = 0x05
 

@@ -1,4 +1,4 @@
-from proxy.utils.encode import encrypt
+from proxy.utils import encrypt
 
 
 if __name__ == "__main__":
