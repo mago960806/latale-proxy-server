@@ -27,9 +27,12 @@ def start_proxy(host, port):
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
-    logger.info(f"Listening on port: {host}:{port}")
-    while True:
-        pass
+    logger.info(f"LaTaleProxyServer is Listening on port: {host if host else '*'}:{port}")
+    try:
+        while True:
+            pass
+    except KeyboardInterrupt:
+        logger.info("Server shutdown...")
 
 
 class Socks5Proxy(StreamRequestHandler):

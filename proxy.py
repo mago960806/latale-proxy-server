@@ -1,3 +1,4 @@
+import configparser
 import sys
 
 from proxy import start_proxy
@@ -21,11 +22,15 @@ logger.add(
 
 
 if __name__ == "__main__":
-    host = "192.168.31.100"
-    port = 2233
+    # 初始化配置
+    config = configparser.ConfigParser()
+    config.read("proxy.ini", encoding="utf-8")
+
+    # 讀取配置
+    port = int(config["LaTaleProxyServer"]["ListenPort"])
 
     logger.info("Server Init...")
-    start_proxy(host, port)
+    start_proxy("", port)
 
     # try:
     #     with ThreadingTCPServer((host, port), Socks5Proxy) as server:
