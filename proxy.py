@@ -1,7 +1,7 @@
 import configparser
 import sys
 
-from proxy import start_proxy
+from proxy.server import start_proxy
 
 from loguru import logger
 

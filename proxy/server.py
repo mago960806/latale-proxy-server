@@ -108,7 +108,7 @@ class Socks5Proxy(StreamRequestHandler):
                 data = self.connection.recv(4096)
                 # logger.debug(f"client: {data.hex(' ').upper()}")
                 decrypted_data = decrypt(data)
-                logger.debug(f"client[decrypt]: {decrypted_data.hex(' ').upper()}")
+                logger.debug(f"client: {decrypted_data.hex(' ').upper()}")
                 try:
                     get_content_info(decrypted_data)
                 except Exception as e:
@@ -119,13 +119,13 @@ class Socks5Proxy(StreamRequestHandler):
             # get data from server, transmit to client
             elif remote in readable:
                 data = remote.recv(4096)
-                # logger.debug(f"server: {decrypt(data)}")
+                logger.debug(f"server: {decrypt(data).hex(' ').upper()}")
                 if self.connection.send(data) <= 0:
                     break
 
             elif input_socket in readable:
                 connection, address = input_socket.accept()
-                print(f"Recv connection from {address[0]}:{address[1]}")
+                logger.debug(f"Input client is up, from {address[0]}:{address[1]}")
                 inputs.append(connection)
             else:
                 for sock in readable:
