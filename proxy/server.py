@@ -12,6 +12,16 @@ from proxy.utils import decrypt, encrypt, get_content_info
 SOCKS_VERSION = 0x05
 
 
+def create_input_socket():
+    input_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    input_socket.bind(("", 2222))
+    input_socket.listen()
+    return input_socket
+
+
+input_socket = create_input_socket()
+
+
 def start_proxy(host, port):
     server = ThreadingTCPServer((host, port), Socks5Proxy)
     server_thread = threading.Thread(target=server.serve_forever)
@@ -85,9 +95,10 @@ class Socks5Proxy(StreamRequestHandler):
                     self.exchange_loop(remote)
 
     def exchange_loop(self, remote):
+        inputs = [self.connection, remote, input_socket]
         while True:
             # wait until client or remote is available for read
-            readable, writeable, exceptional = select.select([self.connection, remote], [], [])
+            readable, writeable, exceptional = select.select(inputs, [], [])
 
             # get data from client, transmit to server
             if self.connection in readable:
@@ -103,20 +114,26 @@ class Socks5Proxy(StreamRequestHandler):
                     break
 
             # get data from server, transmit to client
-            if remote in readable:
+            elif remote in readable:
                 data = remote.recv(4096)
                 # logger.debug(f"server: {decrypt(data)}")
                 if self.connection.send(data) <= 0:
                     break
 
-            # # get data from input, transmit to server
-            # if input_socket in readable:
-            #     input_socket.setblocking(False)
-            #     s, _ = input_socket.accept()
-            #     data = s.recv(4096)
-            #     logger.debug(f"input: {data.hex(' ').upper()}")
-            #     if remote.send(encrypt(data)) <= 0:
-            #         break
+            elif input_socket in readable:
+                connection, address = input_socket.accept()
+                print(f"Recv connection from {address[0]}:{address[1]}")
+                inputs.append(connection)
+            else:
+                for sock in readable:
+                    data = sock.recv(4096)
+                    if data:
+                        logger.debug(f"input: {data.hex(' ').upper()}")
+                        if remote.send(encrypt(data)) <= 0:
+                            break
+                    else:
+                        inputs.remove(sock)
+                        sock.close()
 
     def get_available_methods(self, nmethods: int) -> list[int]:
         return [method for method in self.receive(nmethods)]
