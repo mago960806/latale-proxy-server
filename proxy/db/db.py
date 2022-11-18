@@ -18,6 +18,13 @@ class Database(object):
     def _actions(self):
         return load_actions()
 
+    def get_action_id_by_name(self, action_name: str) -> Optional[int]:
+        if action_name == "動作停止":
+            return 0
+        row = self._actions[self._actions["_Name"] == action_name]
+        if not row.empty:
+            return 2 ** (int(row.iloc[0]["ID"]) - 2)
+
     @lru_cache
     def get_action_name_by_id(self, action_id: int) -> Optional[str]:
         if action_id == 0:

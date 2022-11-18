@@ -7,7 +7,7 @@ from socketserver import StreamRequestHandler, ThreadingTCPServer
 from loguru import logger
 
 from proxy.enums import Reply, AddressType, Command, Method
-from proxy.utils import decrypt, encrypt, get_content_info
+from proxy.utils import decrypt, encrypt, get_sent_data, get_received_data
 
 SOCKS_VERSION = 0x05
 
@@ -33,6 +33,17 @@ def start_proxy(host, port):
             pass
     except KeyboardInterrupt:
         logger.info("Server shutdown...")
+
+
+def split_packet(data: bytes):
+    start = 0
+    packets = []
+    while start < len(data):
+        packet_length = int.from_bytes(data[start : start + 2], byteorder="little")
+        packet_data = data[start : start + packet_length]
+        packets.append(packet_data)
+        start += packet_length
+    return packets
 
 
 class Socks5Proxy(StreamRequestHandler):
@@ -106,20 +117,24 @@ class Socks5Proxy(StreamRequestHandler):
             # get data from client, transmit to server
             if self.connection in readable:
                 data = self.connection.recv(4096)
-                # logger.debug(f"client: {data.hex(' ').upper()}")
-                decrypted_data = decrypt(data)
-                logger.debug(f"client: {decrypted_data.hex(' ').upper()}")
-                try:
-                    get_content_info(decrypted_data)
-                except Exception as e:
-                    print(e)
+                for packet_data in split_packet(data):
+                    decrypted_data = decrypt(packet_data)
+                    try:
+                        get_sent_data(decrypted_data)
+                    except Exception as e:
+                        print(e)
+                    logger.debug(f"client: {decrypted_data.hex(' ').upper()}")
                 if remote.send(data) <= 0:
                     break
 
             # get data from server, transmit to client
             elif remote in readable:
                 data = remote.recv(4096)
-                logger.debug(f"server: {decrypt(data).hex(' ').upper()}")
+                logger.debug(f"server: {data.hex(' ').upper()}")
+                # for packet_data in split_packet(data):
+                #     decrypted_data = decrypt(packet_data)
+                #     get_received_data(decrypted_data)
+                #     logger.debug(f"server: {decrypted_data.hex(' ').upper()}")
                 if self.connection.send(data) <= 0:
                     break
 
@@ -132,7 +147,8 @@ class Socks5Proxy(StreamRequestHandler):
                     data = sock.recv(4096)
                     if data:
                         logger.debug(f"input: {data.hex(' ').upper()}")
-                        if remote.send(encrypt(data)) <= 0:
+                        encrypted_data = encrypt(data)
+                        if remote.send(encrypted_data) <= 0:
                             break
                     else:
                         inputs.remove(sock)
